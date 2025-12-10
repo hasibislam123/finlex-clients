@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "title": "Personal Loan",
+    "description": "Flexible financing for personal expenses, debt consolidation, or major purchases.",
+    "maxAmount": 50000,
+    "image": "https://i.ibb.co.com/CsThbq7L/rc-xyz-nft-gallery-IGHRDkuh-Zns-unsplash.jpg",
+    "interestRate": "Starting at 3.5%"
+  },
+  {
+    "id": 2,
+    "title": "Home Loan",
+    "description": "Affordable mortgages for buying your dream home or refinancing existing property.",
+    "maxAmount": 500000,
+    "image": "https://i.ibb.co.com/Ldvx1Br9/tierra-mallorca-rg-J1-J8-SDEAY-unsplash-1.jpg",
+    "interestRate": "Starting at 4.2%"
+  },
+  {
+    "id": 3,
+    "title": "Auto Loan",
+    "description": "Low-interest financing for new or used vehicle purchases.",
+    "maxAmount": 75000,
+    "image": "https://i.ibb.co.com/49NNFWZ/duong-thinh-CZVlvs-Je37-U-unsplash.jpg",
+    "interestRate": "Starting at 2.9%"
+  },
+  {
+    "id": 4,
+    "title": "Business Loan",
+    "description": "Capital to start, expand, or sustain your business operations.",
+    "maxAmount": 200000,
+    "image": "https://i.ibb.co.com/NXzJj69/amina-atar-MA4a-W8-ZOz-LM-unsplash.jpg",
+    "interestRate": "Starting at 5.0%"
+  },
+  {
+    "id": 5,
+    "title": "Education Loan",
+    "description": "Finance your education or your child's education with favorable terms.",
+    "maxAmount": 100000,
+    "image": "https://i.ibb.co.com/X65ZGFB/fotos-e-s-PMmr3e-G4-unsplash.jpg",
+    "interestRate": "Starting at 3.8%"
+  },
+  {
+    "id": 6,
+    "title": "Medical Loan",
+    "description": "Cover medical expenses with dedicated healthcare financing solutions.",
+    "maxAmount": 30000,
+    "image": "https://i.ibb.co.com/FLhdSwC7/marek-studzinski-vbr-Op0-UDJ40-unsplash.jpg",
+    "interestRate": "Starting at 4.5%"
+  }
+]
