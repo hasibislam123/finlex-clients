@@ -60,12 +60,21 @@ const AuthProvider = ({ children }) => {
                     });
                     
                     const response = await axiosInstance.get('/profile');
+                    // Make sure we're setting the role correctly
                     const role = response.data.role || 'borrower';
+                    console.log('Setting user role:', role); // Debug log
                     setUserRole(role);
+                } else {
+                    // If we can't get a token, default to borrower
+                    setUserRole('borrower');
                 }
+            } else {
+                // If there's no current user, clear the role
+                setUserRole(null);
             }
         } catch (error) {
             console.error('Error fetching user role:', error);
+            // Even if there's an error, we should set a default role to prevent infinite loading
             setUserRole('borrower'); 
         }
     };
@@ -91,10 +100,15 @@ const AuthProvider = ({ children }) => {
 
     // Add a function to manually refresh the user role
     const refreshUserRole = async () => {
-        if (user) {
-            await fetchUserRole(user);
+        // Use the current Firebase user directly instead of the state variable
+        // This ensures we always have the latest user data
+        if (auth.currentUser) {
+          await fetchUserRole(auth.currentUser);
+        } else if (user) {
+          // Fallback to state user if Firebase currentUser is not available
+          await fetchUserRole(user);
         }
-    };
+      };
 
     // Also refresh role when user changes
     useEffect(() => {

@@ -8,7 +8,7 @@ const PrivateRoute = ({ children }) => {
     const location = useLocation();
     
     if (loading) {
-        return <Loading />;
+        return <Loading message="Verifying authentication..." />;
     }
 
     if(!user){

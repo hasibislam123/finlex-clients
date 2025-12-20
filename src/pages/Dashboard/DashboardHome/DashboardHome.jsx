@@ -11,7 +11,15 @@ const DashboardHome = () => {
 
   useEffect(() => {
     // Refresh user role when dashboard loads to ensure we have the latest role
-    refreshUserRole();
+    const refreshRole = async () => {
+      try {
+        await refreshUserRole();
+      } catch (error) {
+        console.error('Error refreshing user role:', error);
+      }
+    };
+    
+    refreshRole();
   }, [refreshUserRole]);
 
   useEffect(() => {
@@ -20,20 +28,25 @@ const DashboardHome = () => {
       return;
     }
     
-    // Don't redirect if we don't have a user role yet
-    if (!userRole) {
-      return;
-    }
+    // Wait a bit more to ensure role is properly set
+    const timer = setTimeout(() => {
+      // Don't redirect if we don't have a user role yet
+      if (!userRole) {
+        return;
+      }
+      
+      // Redirect based on user role
+      if (userRole === 'admin') {
+        navigate('/dashboard/admin');
+      } else if (userRole === 'manager') {
+        navigate('/dashboard/manager');
+      } else {
+        // Default to borrower dashboard
+        navigate('/dashboard/borrower');
+      }
+    }, 100); // Small delay to ensure state updates
     
-    // Redirect based on user role
-    if (userRole === 'admin') {
-      navigate('/dashboard/admin');
-    } else if (userRole === 'manager') {
-      navigate('/dashboard/manager');
-    } else {
-      // Default to borrower dashboard
-      navigate('/dashboard/borrower');
-    }
+    return () => clearTimeout(timer);
   }, [userRole, roleLoading, authLoading, navigate]);
 
   // Show loading spinner while determining role
