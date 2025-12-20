@@ -20,7 +20,8 @@ const useAxiosSecure = () => {
       const reqInterceptor = axiosSecure.interceptors.request.use(async (config) => {
          if (user) {
             try {
-               const token = await getIdToken();
+               // Force refresh the token to ensure it's valid after page reloads
+               const token = await getIdToken(true);
                if (token) {
                   config.headers.Authorization = `Bearer ${token}`;
                }

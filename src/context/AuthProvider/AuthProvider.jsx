@@ -43,33 +43,45 @@ const AuthProvider = ({ children }) => {
         return null;
     };
 
-    // Fetch user role from backend with retry mechanism
+    // Fetch user role from backend with retry mechanism and better error handling
     const fetchUserRole = async (currentUser) => {
         try {
             if (currentUser) {
                 // Add a small delay to ensure Firebase auth is fully settled
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
-                const token = await getIdToken();
+                // Retry mechanism for token fetching
+                let token = null;
+                let retries = 3;
+                
+                while (retries > 0 && !token) {
+                  token = await getIdToken();
+                  if (!token) {
+                    await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms before retry
+                    retries--;
+                  }
+                }
+                
                 if (token) {
-                    // Use environment variable for baseURL
-                    const baseURL = import.meta.env.VITE_API_URL || 'https://finlex-server.vercel.app';
-                    
-                    const axiosInstance = axios.create({
-                        baseURL: baseURL,
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    const response = await axiosInstance.get('/profile');
-                    // Make sure we're setting the role correctly
-                    const role = response.data.role || 'borrower';
-                    console.log('Setting user role:', role); // Debug log
-                    setUserRole(role);
+                  // Use environment variable for baseURL
+                  const baseURL = import.meta.env.VITE_API_URL || 'https://finlex-server.vercel.app';
+                  
+                  const axiosInstance = axios.create({
+                    baseURL: baseURL,
+                    headers: {
+                      'Authorization': `Bearer ${token}`
+                    }
+                  });
+                  
+                  const response = await axiosInstance.get('/profile');
+                  // Make sure we're setting the role correctly
+                  const role = response.data.role || 'borrower';
+                  console.log('Setting user role:', role); // Debug log
+                  setUserRole(role);
                 } else {
-                    // If we can't get a token, default to borrower
-                    setUserRole('borrower');
+                  // If we can't get a token after retries, default to borrower
+                  console.warn('Unable to fetch token after retries, defaulting to borrower role');
+                  setUserRole('borrower');
                 }
             } else {
                 // If there's no current user, clear the role
@@ -78,7 +90,12 @@ const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error('Error fetching user role:', error);
             // Even if there's an error, we should set a default role to prevent infinite loading
-            setUserRole('borrower'); 
+            // But only do this if we're reasonably sure the user exists
+            if (currentUser) {
+              setUserRole('borrower'); 
+            } else {
+              setUserRole(null);
+            }
         }
     };
 
@@ -114,13 +131,6 @@ const AuthProvider = ({ children }) => {
           await fetchUserRole(user);
         }
       };
-
-    // Also refresh role when user changes
-    useEffect(() => {
-        if (user) {
-            fetchUserRole(user);
-        }
-    }, [user]);
 
     const authInfo = {
         user,

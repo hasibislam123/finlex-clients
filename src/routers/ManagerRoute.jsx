@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router';
 import useAuth from '../hooks/useAuth';
 import useRole from '../hooks/useRole';
@@ -7,16 +7,22 @@ import Loading from '../components/Loading/Loading';
 const ManagerRoute = ({ children }) => {
     const { user, loading, refreshUserRole } = useAuth();
     const { userRole, isManager, loading: roleLoading } = useRole();
+    const [retryCount, setRetryCount] = useState(0);
     
     useEffect(() => {
         // If we have a user but no role, try to refresh the role
-        if (user && !userRole && !roleLoading) {
-            refreshUserRole();
+        if (user && !userRole && !roleLoading && retryCount < 3) {
+            const timer = setTimeout(() => {
+                refreshUserRole();
+                setRetryCount(prev => prev + 1);
+            }, 300);
+            
+            return () => clearTimeout(timer);
         }
-    }, [user, userRole, roleLoading, refreshUserRole]);
+    }, [user, userRole, roleLoading, refreshUserRole, retryCount]);
 
     // Show loading spinner while determining authentication state
-    if (loading || roleLoading || (user && !userRole)) {
+    if (loading || roleLoading || (user && !userRole && retryCount < 3)) {
         return <Loading message="Verifying manager access..." />;
     }
 
