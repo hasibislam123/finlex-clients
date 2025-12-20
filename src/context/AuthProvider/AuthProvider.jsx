@@ -43,10 +43,13 @@ const AuthProvider = ({ children }) => {
         return null;
     };
 
-    // Fetch user role from backend
+    // Fetch user role from backend with retry mechanism
     const fetchUserRole = async (currentUser) => {
         try {
             if (currentUser) {
+                // Add a small delay to ensure Firebase auth is fully settled
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
                 const token = await getIdToken();
                 if (token) {
                     // Use environment variable for baseURL
@@ -86,6 +89,8 @@ const AuthProvider = ({ children }) => {
             
             // Fetch user role when user state changes
             if (currentUser) {
+                // Add a small delay to ensure auth is fully settled before fetching role
+                await new Promise(resolve => setTimeout(resolve, 200));
                 await fetchUserRole(currentUser);
             } else {
                 setUserRole(null);
