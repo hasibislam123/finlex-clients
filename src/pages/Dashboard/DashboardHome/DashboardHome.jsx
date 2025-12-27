@@ -9,6 +9,7 @@ const DashboardHome = () => {
   const { refreshUserRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [roleRefreshed, setRoleRefreshed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Refresh user role when dashboard loads to ensure we have the latest role
@@ -22,8 +23,11 @@ const DashboardHome = () => {
       }
     };
     
-    refreshRole();
-  }, [refreshUserRole]);
+    // Only refresh if we haven't already and it's the first attempt
+    if (!roleRefreshed && retryCount === 0) {
+      refreshRole();
+    }
+  }, [refreshUserRole, roleRefreshed, retryCount]);
 
   useEffect(() => {
     // Don't redirect while loading or waiting for role refresh
@@ -43,7 +47,7 @@ const DashboardHome = () => {
         // Default to borrower dashboard
         navigate('/dashboard/borrower');
       }
-    }, 100); // Small delay to ensure state updates
+    }, 200); // Slightly longer delay to ensure state updates properly
     
     return () => clearTimeout(timer);
   }, [userRole, roleLoading, authLoading, navigate, roleRefreshed]);

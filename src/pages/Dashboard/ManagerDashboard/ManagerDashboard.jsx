@@ -6,7 +6,7 @@ import { FaUsersCog, FaList, FaFileAlt } from "react-icons/fa";
 import Loading from '../../../components/Loading/Loading';
 
 const ManagerDashboard = () => {
-  const { user } = useAuth();
+  const { user, refreshUserRole } = useAuth();
   const [stats, setStats] = useState({
     totalLoans: 0,
     pendingApplications: 0,
@@ -19,6 +19,7 @@ const ManagerDashboard = () => {
   const [recentLoans, setRecentLoans] = useState([]);
   const [loading, setLoading] = useState(true); // Default to true
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
 
@@ -81,41 +82,78 @@ const ManagerDashboard = () => {
       } catch (error) {
         console.error('Error fetching manager stats:', error);
         console.error('Error response:', error.response);
-        setError(error.message || 'Failed to load dashboard data');
+        
+        // Check if this is an authentication/authorization error
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          // Try to refresh the user role and token
+          try {
+            await refreshUserRole();
+            // If we still have less than 3 retries, try again
+            if (retryCount < 3) {
+              setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+              }, 1000);
+              return; // Exit this execution, the useEffect will run again due to retryCount change
+            } else {
+              setError('Access denied. Please log in again.');
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing user role:', refreshError);
+            setError('Access denied. Please log in again.');
+          }
+        } else {
+          setError(error.message || 'Failed to load dashboard data');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    // Wrap in an async IIFE to avoid the linter warning
-    (async () => {
-      await fetchManagerStats();
-    })();
-  }, [axiosSecure]);
+    // Only run the fetch if we haven't exceeded retry attempts
+    if (retryCount <= 3) {
+      fetchManagerStats();
+    }
+  }, [axiosSecure, retryCount, refreshUserRole]);
 
-  if (loading) {
+  // Handle retry manually
+  const handleRetry = async () => {
+    setError(null);
+    setRetryCount(0);
+    try {
+      await refreshUserRole();
+    } catch (error) {
+      console.error('Error refreshing user role:', error);
+    }
+  };
+
+  if (loading && retryCount === 0) {
     return <Loading />;
   }
 
   if (error) {
-    return (
-      <div className="p-6">
-        <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>Error: {error}</span>
+    if (retryCount > 3) {
+      return (
+        <div className="p-6">
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Error: {error}</span>
+          </div>
+          <div className="mt-4">
+            <button 
+              className="btn btn-primary" 
+              onClick={handleRetry}
+            >
+              Retry
+            </button>
+          </div>
         </div>
-        <div className="mt-4">
-          <button 
-            className="btn btn-primary" 
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+      );
+    } else {
+      // Still trying to load, show loading
+      return <Loading message="Retrying... Please wait." />;
+    }
   }
 
   return (
