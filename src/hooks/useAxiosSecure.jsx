@@ -12,7 +12,7 @@ const axiosSecure = axios.create({
 })
 
 const useAxiosSecure = () => {
-   const { user, getIdToken, logOut, refreshUserRole } = useAuth();
+   const { user, getIdToken, logOut } = useAuth();
    const navigate = useNavigate();
    
    useEffect(() => {
@@ -42,23 +42,11 @@ const useAxiosSecure = () => {
 
          const statusCode = error.response?.status;
          if (statusCode === 401 || statusCode === 403) {
-            // First, try to refresh the user role and token to see if the user still has access
             try {
-               await refreshUserRole();
-               const token = await getIdToken(true);
-               
-               // If we get a new token, retry the original request
-               if (token && error.config) {
-                  error.config.headers.Authorization = `Bearer ${token}`;
-                  return axiosSecure.request(error.config);
-               } else {
-                  // If no token available, then proceed with logout
-                  await logOut();
-                  navigate('/login');
-               }
-            } catch (refreshError) {
-               console.error('Error during token refresh:', refreshError);
                await logOut();
+               navigate('/login');
+            } catch (logoutError) {
+               console.error('Error during logout:', logoutError);
                navigate('/login');
             }
          }
@@ -70,7 +58,7 @@ const useAxiosSecure = () => {
          axiosSecure.interceptors.request.eject(reqInterceptor);
          axiosSecure.interceptors.response.eject(resInterceptor);
       }
-   }, [user, getIdToken, logOut, refreshUserRole, navigate])
+   }, [user, getIdToken, logOut, navigate])
 
    return axiosSecure;
 };
